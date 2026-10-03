@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小四中文朗讀 (四上一/二)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .article-text {
+            font-family: 'Noto Serif TC', serif;
+            line-height: 2.3;
+        }
+        .sentence {
+            transition: all 0.2s ease;
+            padding: 2px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .sentence:hover {
+            background-color: #fef08a; /* Tailwind yellow-200 */
+            color: #854d0e;
+        }
+        .sentence.active {
+            background-color: #fde047; /* Tailwind yellow-300 */
+            color: #713f12;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        /* 專名號 (Proper Noun Mark) Styling - 1px fine underline matching text color */
+        .proper-name {
+            border-bottom: 1px solid currentColor;
+            padding-bottom: 1px;
+            display: inline;
+        }
+
+        .vocab-mark {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 4px;
+            padding: 1px 4px;
+            margin: 0 1px;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        /* Recognize Vocab (認讀字詞) - Yellow accent */
+        .highlight-mode .vocab-recognize {
+            background-color: #fef08a; /* yellow-200 */
+            color: #854d0e;
+            border-bottom: 2px solid #facc15;
+            font-weight: 600;
+        }
+
+        /* Apply Vocab (運用字詞) - Emerald accent */
+        .highlight-mode .vocab-apply {
+            background-color: #d1fae5; /* emerald-100 */
+            color: #065f46;
+            border-bottom: 2px solid #34d399;
+            font-weight: 600;
+        }
+
+        /* Active Target when clicked */
+        .vocab-mark.active-vocab-target {
+            background-color: #f97316 !important; /* orange-500 */
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            border-bottom: none !important;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.35), 0 4px 10px rgba(249, 115, 22, 0.25);
+            transform: scale(1.12);
+            animation: pulseHighlight 1.5s infinite alternate;
+        }
+
+        @keyframes pulseHighlight {
+            0% { transform: scale(1.08); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3); }
+            100% { transform: scale(1.14); box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.15); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-amber-50/40 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-amber-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <h1 class="text-xl font-bold tracking-wide">小四中文朗讀 (四上一/二)</h1>
+            </div>
+            
+            <!-- Controls Toolbar -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <!-- Voice Selector -->
+                <div class="hidden md:flex items-center bg-amber-800/60 rounded-lg px-2 py-1 text-sm">
+                    <i class="fa-solid fa-headset mr-2 text-amber-200"></i>
+                    <select id="voiceSelect" class="bg-transparent text-white focus:outline-none cursor-pointer">
+                        <option value="" class="text-slate-800">載入語音中...</option>
+                    </select>
+                </div>
+
+                <!-- Font Size Controls -->
+                <div class="flex items-center bg-amber-800/60 rounded-lg p-1 text-xs sm:text-sm">
+                    <button id="btnDecreaseFont" class="px-2 py-1 hover:bg-amber-600 rounded transition" title="縮小字體">A-</button>
+                    <span id="fontSizeDisplay" class="px-1 text-amber-200 font-mono">22px</span>
+                    <button id="btnIncreaseFont" class="px-2 py-1 hover:bg-amber-600 rounded transition" title="放大字體">A+</button>
+                </div>
+
+                <!-- Folder Manager Toggle -->
+                <button id="btnToggleFolder" class="bg-amber-800/80 hover:bg-amber-900 text-amber-100 px-3 py-1.5 rounded-lg text-sm flex items-center shadow-sm transition border border-amber-600/40">
+                    <i class="fa-solid fa-folder-open mr-1.5 text-amber-300"></i>
+                    <span class="hidden sm:inline">課文檔案庫</span>
+                </button>
+
+                <!-- Edit Mode Toggle -->
+                <button id="btnToggleEdit" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-sm flex items-center shadow-sm transition">
+                    <i class="fa-solid fa-pen-to-square mr-1.5"></i>
+                    <span class="hidden sm:inline">編輯課文</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto w-full flex-1 flex flex-col md:flex-row p-4 gap-6">
+
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 bg-white rounded-2xl shadow-sm border border-amber-100 p-4 flex flex-col shrink-0">
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 px-2 flex items-center justify-between">
+                <span id="lessonCountLabel">課文目錄</span>
+                <i class="fa-solid fa-list-ol"></i>
+            </h2>
+            <nav id="lessonList" class="space-y-1.5 overflow-y-auto max-h-[220px] md:max-h-none flex-1">
+                <!-- Dynamically generated lesson tabs -->
+            </nav>
+        </aside>
+
+        <!-- Article Reader Area -->
+        <main class="flex-1 bg-white rounded-2xl shadow-sm border border-amber-100 p-6 sm:p-8 flex flex-col justify-between">
+            
+            <div>
+                <!-- Lesson Header & Audio Playbar -->
+                <div class="border-b border-slate-100 pb-5 mb-6">
+                    <div class="flex flex-wrap justify-between items-start gap-4">
+                        <div>
+                            <span id="lessonBadge" class="inline-block px-3 py-1 bg-amber-100 text-amber-800 font-semibold text-xs rounded-full mb-2">
+                                第一課
+                            </span>
+                            <h2 id="lessonTitle" class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
+                                載入中...
+                            </h2>
+                        </div>
+
+                        <!-- Audio Control Buttons -->
+                        <div class="flex flex-wrap items-center gap-2 bg-amber-50 p-2 rounded-xl border border-amber-100">
+                            <button id="btnPlayAll" class="bg-amber-600 hover:bg-amber-700 active:scale-95 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center shadow transition">
+                                <i id="playIcon" class="fa-solid fa-play mr-2"></i>
+                                <span id="playText">朗讀全文</span>
+                            </button>
+
+                            <button id="btnStop" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm transition" title="停止朗讀">
+                                <i class="fa-solid fa-square"></i>
+                            </button>
+
+                            <button id="btnToggleHighlightVocab" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center" title="切換文章生字高亮">
+                                <i class="fa-solid fa-highlighter mr-1.5 text-amber-600"></i>
+                                <span id="highlightBtnText">生字高亮</span>
+                            </button>
+
+                            <select id="rateSelect" class="bg-white border border-slate-200 text-slate-700 text-xs sm:text-sm rounded-lg px-2 py-2 focus:outline-none cursor-pointer">
+                                <option value="0.75">語速 0.75x</option>
+                                <option value="1" selected>語速 1.0x</option>
+                                <option value="1.25">語速 1.25x</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Tips & Legends for Vocab and Proper Nouns -->
+                    <div class="text-xs text-slate-500 mt-3 flex items-center flex-wrap gap-3">
+                        <span class="flex items-center"><i class="fa-solid fa-circle-info mr-1 text-amber-500"></i> 提示：點擊文章句子可朗讀；點擊生字可發音與定位；</span>
+                        <span class="inline-flex items-center text-xs text-amber-900 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-md font-medium">
+                            <span class="w-2.5 h-2.5 bg-amber-300 rounded-full mr-1.5"></span> 認讀字詞
+                        </span>
+                        <span class="inline-flex items-center text-xs text-emerald-900 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md font-medium">
+                            <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full mr-1.5"></span> 運用字詞
+                        </span>
+                        <span class="inline-flex items-center text-xs text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
+                            <span class="proper-name font-bold mr-1">底線</span> 專名號（人名/地名/國名）
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Display Article View -->
+                <div id="articleView" class="article-text text-slate-700 space-y-4 text-lg highlight-mode">
+                    <!-- Dynamic sentence, proper noun and vocab-wrapped text goes here -->
+                </div>
+
+                <div id="vocabSection" class="mt-8 pt-5 border-t border-amber-200/60 bg-amber-50/50 rounded-2xl p-4 sm:p-5 shadow-inner space-y-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-base sm:text-lg font-bold text-amber-900 flex items-center">
+                                <i class="fa-solid fa-spell-check text-amber-600 mr-2 text-xl"></i> 本課生字詞語庫
+                            </h3>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <button id="btnClearVocabSelect" class="text-xs bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-lg transition flex items-center hidden">
+                                <i class="fa-solid fa-xmark mr-1 text-slate-400"></i> 清除選取
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 認讀字詞 (Recognize Vocab) Section -->
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-2 flex items-center">
+                            <span class="w-2.5 h-2.5 bg-amber-400 rounded-full mr-1.5"></span>
+                            認讀字詞
+                            <span id="recognizeCountBadge" class="ml-2 text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">0 字</span>
+                        </div>
+                        <div id="vocabRecognizeList" class="flex flex-wrap gap-2">
+                            <!-- Dynamically generated recognize vocab badges -->
+                        </div>
+                    </div>
+
+                    <!-- 運用字詞 (Apply Vocab) Section -->
+                    <div class="pt-2 border-t border-amber-100">
+                        <div class="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-2 flex items-center">
+                            <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full mr-1.5"></span>
+                            運用字詞
+                            <span id="applyCountBadge" class="ml-2 text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">0 字</span>
+                        </div>
+                        <div id="vocabApplyList" class="flex flex-wrap gap-2">
+                            <!-- Dynamically generated apply vocab badges -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="articleEditor" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">課文標題</label>
+                        <input type="text" id="editTitleInput" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">課文內容（可直接粘貼文章）</label>
+                        <textarea id="editTextarea" rows="11" class="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-amber-500 focus:outline-none font-serif leading-relaxed" placeholder="請在此輸入或粘貼課文內容..."></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-amber-900 mb-1">認讀字詞 (以逗號、頓號或空格隔開)</label>
+                            <input type="text" id="editVocabInput" class="w-full border border-amber-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-amber-50/30" placeholder="例如: 實地, 淵源, 清幽">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-emerald-900 mb-1">運用字詞 (以逗號、頓號或空格隔開)</label>
+                            <input type="text" id="editUseVocabInput" class="w-full border border-emerald-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-emerald-50/30" placeholder="例如: 帶領, 集合, 搖曳">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">專有名詞 - 專名號 (人名、地名、國名等，不用加「先生」，以逗號隔開)</label>
+                        <input type="text" id="editProperInput" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="例如: 孫中山, 黃老師, 香港大學, 中國">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button id="btnCancelEdit" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm">取消</button>
+                        <button id="btnSaveEdit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium shadow">儲存修改</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Paginator Nav -->
+            <div class="flex justify-between items-center border-t border-slate-100 pt-6 mt-8">
+                <button id="btnPrev" class="flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-chevron-left mr-2"></i> 上一課
+                </button>
+                <span id="pageIndicator" class="text-xs sm:text-sm text-slate-400 font-medium">
+                    第 1 / 12 課
+                </span>
+                <button id="btnNext" class="flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed">
+                    下一課 <i class="fa-solid fa-chevron-right ml-2"></i>
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast Component -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white text-sm px-4 py-3 rounded-xl shadow-lg transition-all transform translate-y-20 opacity-0 pointer-events-none flex items-center space-x-2 z-50">
+        <i class="fa-solid fa-circle-check text-green-400"></i>
+        <span id="toastMsg">通知訊息</span>
+    </div>
+
+    <!-- Folder & Batch Upload Modal -->
+    <div id="folderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-amber-100">
+            <div class="bg-amber-800 text-white px-6 py-4 flex justify-between items-center shrink-0">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-folder-open text-amber-300 text-xl"></i>
+                    <h3 class="text-lg font-bold">12 課課文檔案總管與上傳</h3>
+                </div>
+                <button id="btnCloseFolder" class="text-amber-200 hover:text-white p-1 rounded-lg text-xl transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 flex-1 bg-amber-50/20">
+                <div class="bg-white border-2 border-dashed border-amber-300 rounded-xl p-6 text-center hover:border-amber-500 transition cursor-pointer relative" id="dropZone">
+                    <input type="file" id="batchFileInput" multiple accept=".txt,.json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-amber-600 mb-2"></i>
+                    <h4 class="font-bold text-slate-800">點擊或拖拽多個檔案上傳</h4>
+                    <p class="text-xs text-slate-500 mt-1">支援同時選擇多個 `.txt` 文字檔或 `.json` 備份檔</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-sm font-semibold text-slate-700">課文資料備份與還原：</div>
+                    <div class="flex space-x-2">
+                        <button id="btnExportJSON" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition flex items-center">
+                            <i class="fa-solid fa-download mr-1.5 text-amber-600"></i> 匯出全部課文 (JSON)
+                        </button>
+                        <button id="btnResetDefault" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-lg transition flex items-center">
+                            <i class="fa-solid fa-rotate-left mr-1.5"></i> 重置為預設課文
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center">
+                        <i class="fa-solid fa-list-check mr-2 text-amber-600"></i> 第一至第十二課 內容與狀態
+                    </h4>
+                    <div id="folderLessonList" class="space-y-2">
+                        <!-- Dynamically populated lesson rows -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end shrink-0">
+                <button id="btnDoneFolder" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl text-sm transition">
+                    完成關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Full 12 Lessons Dataset with updated 認讀字詞, 運用字詞 & 專名號 (Proper Nouns without "先生")
+        const defaultLessons = [
+            {
+                id: 1,
+                title: "踏上孫中山的足跡",
+                content: `星期六，我們班的同學在黃老師的帶領下，到孫中山史蹟徑進行了一次實地學習。\n\n我們在史蹟徑的起點——香港大學門口集合。黃老師一邊介紹香港大學和孫中山先生的淵源，一邊帶著我們來到一處清幽的荷花池。池中粉嫩嬌艷的荷花輕輕地隨風搖曳，還有幾隻小龜慵懶地趴在石頭上曬著太陽，真是一幅美景！忽然聽子晴叫道：「喂！你們看，那是孫中山先生的銅像！」只見「孫中山先生」穿著中國傳統的長衫，手拄拐杖端端正正地坐著，凝神眺望遠方，不知道他正在思考著甚麼重要的問題呢？\n\n出了大學，我們走到般咸道官立小學。曉峯問：「中山先生不會是這所小學畢業的吧？」文軒指著路旁一個展示牌說：「嗯，這上面說小學的前身拔萃書室，才是中山先生讀過的學校。」\n\n沿著路標繼續前行，我們來到士丹頓街。舉目望去，街道兩旁都是餐廳。我不禁疑惑:這裏跟孫中山先生會有甚麼關係呢？黃老師指著一座毫不顯眼的大廈說：「我們很難看出，這就是在中國歷史上極其重要的興中會的舊址吧！」接著，她向我們細述了孫中山先生成立興中會，推翻腐败滿清王朝的歷史。\n\n活動結束後，我們都覺得，與其只有我們獨享這次遊史蹟徑的見聞，不如舉辦一個「中山先生與香港」的壁報展，讓所有的同學都能知道中山先生在香港的往事。`,
+                vocab: ["實地", "淵源", "清幽", "嬌艷", "慵懶", "凝神", "路標", "毫不", "推翻", "腐敗"],
+                useVocab: ["帶領", "集合", "搖曳", "傳統", "眺望", "舉目", "疑惑", "結束", "見聞", "往事"],
+                properNouns: ["黃老師", "孫中山", "中山", "香港大學", "香港", "般咸道官立小學", "般咸道", "曉峯", "文軒", "拔萃書室", "士丹頓街", "中國", "興中會", "滿清", "子晴"]
+            },
+            {
+                id: 2,
+                title: "鬧市中的淨土",
+                content: `今天，我們參觀了南蓮園池，想不到在鬧市中竟有一座這樣清幽的中式園林。\n\n走進正門，迎面是一座稱為「九山八海」的大型奇石擺設。九塊青色巨石組合有致，象徵大禹治水後把中國分成的九州，又像九個看守門戶的巨人。巨石旁邊種了多株羅漢松，配以各種植物如木棉、小果柿、佛肚竹等，錯落有致。遊人從煩囂的鬧市一走進來，立即就會感受到陣陣愉悅與寧靜。我們沿右邊的小路走不多遠，就到達圓滿閣。圓滿閣建在一個池塘之上，是一座八角形的台閣。閣的瓦頂是紫色的，廊柱都髹成金色，在陽光的照射下，金碧輝煌；朵朵荷花鮮艷欲滴，清風徐來，散發著陣陣幽香。\n\n離開圓滿閣走了一會，香海軒就映入眼簾。香海軒是一座依照唐代規格建造的木構四合院，中庭配置山石古樹，青草鋪地，莊嚴又不失清雅怡人。香海軒背靠香山，香山上種滿了桂花、九里香、百合等花木，四季都香氣瀰漫。我們沉醉在鳥語花香的時候，忽然見到一湖碧水，不久就來到了蒼塘。\n\n蒼塘寬闊而平靜，站在槐亭，遠眺對面的松茶榭，四周的山、石、樓台，倒映在水面上，令人彷彿置身在明淨的唐代世界！水中有幾十尾色彩斑斕的錦鯉，宛如披著錦羅綢緞，悠然自得地游著，游著。\n\n我們享受著鳥語清風，在曲折的小徑上漫步，不知不覺已夕陽西下，我們便依依不捨地從北門走出這個寧靜的世界。`,
+                vocab: ["淨土", "擺設", "象徵", "錯落有致", "煩囂", "愉悅", "瓦頂", "金碧輝煌", "幽香"],
+                useVocab: ["規格", "彌漫", "倒映", "斑斕", "綢緞", "依依不捨"],
+                properNouns: ["南蓮園池", "九山八海", "大禹", "中國", "九州", "圓滿閣", "香海軒", "唐代", "香山", "蒼塘", "懷亭", "松茶榭", "北門"]
+            },
+            {
+                id: 3,
+                title: "風箏",
+                content: `由於父母到外地公幹，阿萬這個暑假就寄住在舅舅家，和阿明、阿善、阿立、阿忠四個混得比親兄弟還要熟，每天和他們一起完成習作，一起到小山上放風箏，幾乎沒有一天不聚在一起。\n\n現在父母回來了，阿萬要回自己的家。一想到要和他們分開，阿萬心裏就有些酸酸的痛苦。阿萬相信他們一定會來送他的，所以請父母先走，他一個人在舅舅家裏等，沒想到等了很久，還是沒有看到他們的人影，更沒想到他們竟然還有心情跑到小山上放風箏。他含著眼淚，沿著山下的小路往前走，強迫自己儘量不要往小山上看。「阿萬——阿萬——」忽然他聽到背後呼叫的聲音。起初他還以為是自己太想念他們才會聽錯了，可是聲音越來越清晰了，他知道，他們是真的在叫他了。於是他轉頭一看，只見他們四個人站在小山上跟他揮手，四隻風箏在他的身後，高高地升起。風箏上面寫著四個斗大的字——阿萬再見。阿善和阿明他們從後面跑過來，阿善氣喘籲籲地說：「我們把風箏繫在高高的樹上，要讓你走很遠了，還看得見。」\n「好——好——保——重——」阿萬緊緊地握著四個人的手，哽咽得說不出話來。走了很遠了，風箏還在天上飄著。阿萬頻頻地回頭，看那高高飛起的風箏，淚水沿著臉頰往下滑落，模糊了風箏上的字跡。淚眼中，四隻風箏變成四張友善的臉，在空中飄著。`,
+                vocab: ["公幹", "混", "痛苦", "人影", "強迫", "儘量", "以為", "繫", "哽咽", "字跡"],
+                useVocab: ["酸", "竟然", "呼叫", "清晰", "氣喘吁吁", "保重", "頻頻", "臉頰", "模糊", "友善"],
+                properNouns: ["阿萬", "阿明", "阿善", "阿立", "阿忠"]
+            },
+            {
+                id: 4,
+                title: "病人",
+                content: `我不喜歡進醫院，卻想試當病人。人一生病在家裏就像做了皇帝，各種美味的東西會送上來讓你挑選；可以在別人去上學時留在家裏抱玩具；媽媽不一會兒又來摸你的額頭，她焦急的神情能證明你是她的寶貝。\n\n可惜，我不常生病，即使被雨淋濕了後不用乾毛巾擦，連噴嚏也不打一個。\n\n一天回家途中，天空下起毛毛雨。我以為淋這些雨不會生病，可是回家後我鼻孔癢癢的，忍不住連連打起噴嚏來。\n\n媽媽問我是不是感冒了，趕緊過來扶我，好像我虛弱得快要倒下似的。\n\n我被安排在被窩裏躺下。很快，我就發現生病其實是件苦差事。弟弟、妹妹在屋外活蹦亂跳，我卻不能參與，甚至連大笑也不可以，就像個倒黴蛋似的緊鎖雙眉。媽媽端來白開水給我喝，我朝弟弟、妹妹的果汁看，可媽媽卻斬釘截鐵地說：「感冒喝白開水最好。」\n\n更糟的是，爸爸興沖沖地回來了，他買了票，要帶全家去看電影。我掀開被子想起來，卻被媽媽按在床上，我只能眼睜睜地看著弟弟、妹妹歡天喜地出門去。這下，我真的哭喪著臉，渾身難受。\n\n媽媽見我臉色難看，去請隔壁的兒科醫生叔叔來看我。叔叔立刻就提著大藥箱來了，他讓我張著嘴說「啊」，又用聽診器左聽右聽。看見他一樣一樣地取出藥來，急了，大喊：「我沒病！」\n\n媽媽看著我，她情願我沒病。\n（改寫自秦文君原作）`,
+                vocab: ["挑選", "神情", "差事", "斬釘截鐵", "掀", "哭喪着臉", "渾身", "聽診器"],
+                useVocab: ["焦急", "證明", "噴嚏", "虛弱", "活蹦亂跳", "參與", "興衝衝", "眼睜睜", "歡天喜地", "情願"],
+                properNouns: ["秦文君"]
+            },
+            {
+                id: 5,
+                title: "聽雨",
+                content: `無論是大雨點兒跳，\n還是小雨點兒鬧，\n都是亮晶晶的雨孩子，\n在奔跑，在舞蹈。\n\n我不想偷看雨的遊戲，\n卻寧願靜聽雨的歡笑，\n叮咚，跳上了草地，\n叮咚，跳上了樹梢。\n\n雨，玩累了，\n就流進了土地的懷抱；\n雨，停息了，\n就陪伴著種子睡覺。\n\n雨過天晴，我聽見：\n花吹喇叭，鳥唱歌謠。\n（錄自金波原作）`,
+                vocab: ["無論", "鬧", "寧願", "樹梢", "喇叭"],
+                useVocab: ["亮晶晶", "奔跑", "舞蹈", "偷", "叮咚", "懷抱", "停息", "陪伴", "雨過天晴"],
+                properNouns: ["金波"]
+            },
+            {
+                id: 6,
+                title: "你一定會聽見的",
+                content: `你聽過蒲公英梳頭的聲音嗎？蒲公英有一蓬雪白的頭髮，當起風的時候，頭髮互相輕觸著，像磨砂紙那樣沙沙地細響，轉眼間，她的頭髮，全被風兒梳掉了。\n\n你聽到八十隻螞蟻小跑步的聲音嗎？有一天，螞蟻排列在紅紅的楓葉上準備做體操，「噗」，一粒小酸果從頭頂落下，「不好，炸彈來啦！」頃刻間，牠們全逃散了！\n\n這都是想像的聲音嗎？我怎麼聽不出來呢？既然你這樣問了，那麼我再說清楚一點：\n\n你總聽過風吹的聲音吧？當微風吹過柳梢，當清風拂過明月，當狂風撲過巨浪，當颱風橫越山嶺，你總聽到些甚麼吧？你也總聽過水聲吧？當山間的清泉如一道銀箭奔向溪流，當嘩啦啦的大雨打向屋脊，當小水滴清脆地落在盛水的臉盆裏，當你上完廁所拉抽水馬桶，你總該聽到些甚麼吧？\n\n人有耳朵，聽八方，加上眼睛，觀四方。用心聽，用心看，也用心想，構成了一個豐富奇妙的世界。\n\n你善用你的耳朵嗎？你聽見了世界的聲音嗎？這裏的一個聲音遊戲，你要不要試著玩玩看，也試著把感覺記下來？\n\n嚼幾片脆脆的餅乾、幾顆硬硬的糖果，感覺一下是甚麼聲音。\n\n聽一聽雨滴落在玻璃窗上的聲音。\n\n聽一首喜愛的音樂，把它編編成一個故事。\n\n你開始微笑，輕輕地笑，大聲地笑，這時候，你一定會聽見的，這個世界，也跟著你歡笑。\n（改寫自桂文亞原作）`,
+                vocab: ["蒲公英", "蓬", "炸彈", "頃刻", "逃散", "拂", "山嶺", "清泉", "溪流", "屋脊"],
+                useVocab: ["轉眼間", "排列", "清楚", "撲", "水滴", "清脆", "構成", "豐富", "嚼"],
+                properNouns: ["桂文亞"]
+            },
+            {
+                id: 7,
+                title: "我們釣魚去",
+                content: `上個星期天，志文和亮亮一同到堤岸邊釣魚。亮亮常在同學面前誇口，說自己曾在碼頭釣到兩條黃花魚，又曾在石灘釣到三尾火點。聽過亮亮的戰績，志文羨慕不已，希望他能指點一下自己的釣魚技術。\n\n剛在堤邊坐下，亮亮就熟練地把魚餌穿在釣鉤上，然後交給了志文。正當亮亮滔滔不絕地講解釣魚的竅門時，志文只覺得手上的魚絲不停地抖動，連忙一扯一拉，一條活蹦亂跳、銀光閃閃的魚兒便上鉤了！說也奇怪，志文的釣竿一下水，不久就有魚兒上鉤。亮亮呢？一整天都沒有收穫。不好意思地說：「看來今天運氣不好，沒法讓你見識我的技術了。」看到亮亮灰溜溜的樣子，志文安慰他說：「不要緊，我們星期六再來這兒釣魚吧。」\n\n轉眼間，又是一個星期六。志文興衝衝地來到亮亮家，不料亮亮的大人卻說他一大清早便離家外出，沒有提到釣魚的事。志文既然找不到亮亮，於是留下了一張便條給他。\n\n-------------------------------------------\n亮亮：\n上星期天我們約好今天去釣魚，看來你忘記了。今天天氣晴朗，看來明天也一樣會風和日麗，約會就順延至明天吧。請你準備好釣魚用具，明天早晨在家等我，我八時來找你。\n\n志文\n即日下午三時\n-------------------------------------------\n\n亮亮回到家裏，看到了志文留下的便條，連忙準備好釣魚的用具，急匆匆地趕到志文家。誰知志文和爸爸、媽媽去看電影了。亮亮寫了一張便條，請志文家的保姆轉給他。\n\n-------------------------------------------\n志文：對不起，我不記得跟你約定了今天到堤邊釣魚。明天我要跟爸爸、媽媽去澳門親戚家吃喜酒，不能和你一起去釣魚了，很抱歉。現在將釣魚用具送來，你就跟你爸爸一起去吧！希望你玩得開心。\n\n亮亮\n即日下午六時半\n-------------------------------------------\n\n志文看完電影回來，看到亮亮留下的便條、魚竿和塑料桶，心想：亮亮想得可真周到，但不知道甚麼時候才能見識到他的釣魚技術？`,
+                vocab: ["誇口", "戰績", "指點", "技術", "竅門", "抖動", "灰溜溜", "順延", "即日", "保姆"],
+                useVocab: ["羨慕", "熟練", "滔滔不絕", "收穫", "運氣", "見識", "安慰", "風和日麗", "急匆匆", "周到"],
+                properNouns: ["志文", "亮亮", "澳門"]
+            },
+            {
+                id: 8,
+                title: "班長的候選人",
+                content: `收件人： classmonitor@yagoon.com.hk\n主 旨： 班長的候選人\n\n親愛的班長：\n\n你每天一大早向老師領作業，面不改色地把一大摞作業抱回教室。上課的時候，你是那麼的專心，把老師在黑板上寫的都記在一個本子上，這年頭哪有這麼認真的學生？\n\n你對女同學也不賴，還記得排位子的事，我們寫給女同學的信，你一直說過火過火。後來我們生起氣來，也就不給你看那封信，直接給女同學了。現在你快要競選班長了，因此就給你一份紀錄，信裏是這麼寫的。\n\n親愛的女同學：\n\n自從我們「宣戰」以來，已經是一百二十個小時。當老師問我們要男女同學一起坐還是分開來坐時，是你們先說不跟男同學坐的。你們這樣不顧我們的自尊心，大聲說不跟男同學坐，那好！就楚河漢界分清楚，大家馬上上去跟老師說明白，不必通過班長了。\n一羣憤怒的男同學\n\n當然後來的事你也知道了，要男女一起坐，還用抽籤方式，大家自己抽到和誰坐就只好認命。如今為這件事我們向你道歉！\n\n還有，因為你當時不知道內情，所以女同學對你印象奇好，這次競選班長，女同學都會投你一票。聽說女同學的領袖趙滿芬也想競選班長，如果你不參加競選，趙滿芬必定當選，因為我們班上的女同學比男同學多。\n\n我們也不得不佩服你，像你這種百樣都挑不出一個錯的人，最適合做我們的班長。作為你的好朋友，我們都會大力支持你！\n永遠站在你一方的好友\n\n收件人： kongming@yagoon.com.hk\n主 旨： 感謝\n\n親愛的好友：\n\n感謝「小孔明」代表你們寫信給我，你們的支持令我感動，在這半年班長生涯中結交了你們這批好友，我已經很滿足。我其實不想競選班長，原因也挺多的，最主要是自從當了班長，功課退步了，當然這也不能怪別人，是自己不太會分配時間溫習功課。\n\n排位子事件如今圓滿結束，而我們和女同學之間也不像以前那麼敵對，那是因為我們被安排男女同坐，也只好跟女同學和平共處，又或許我們都長大了！至於趙滿芬競選班長，我是一定支持她的，她不但功課好，又是田徑高手，為班上爭了不少金牌，而且為人正直豪爽。\n\n你們怎麼沒有想到「小孔明」也是個人才呢？「小孔明」的文筆一向令人佩服，他又是辯論隊隊長，腦筋轉得快，是女同學的偶像。\n\n為了使班級生活更多姿多彩，無論是「小孔明」或者趙滿芬，這次我們一定要換班長，這是為大局着想，你們也不會反對我的建議吧！「小孔明」，為了我們的前途，請你接受新的挑戰！\n\n將要離任的班長\n（改寫自孫愛玲《死黨》）`,
+                vocab: ["候選人", "面不改色", "一大摞", "宣戰", "楚河漢界", "憤怒", "認命", "印象"],
+                useVocab: ["競選", "佩服", "和平共處", "豪爽", "辯論", "多姿多彩", "離任"],
+                properNouns: ["趙滿芬", "小孔明", "孔明", "楚河漢界", "孫愛玲"]
+            },
+            {
+                id: 9,
+                title: "賣火柴的女孩",
+                content: `除夕夜，一個小女孩赤著腳在街上走著。她的腳已經凍得發青，舊圍裙裏有許多包火柴。她整天都沒有賣掉一根火柴，所以不敢回家。\n\n雪落在她的長髮上，街上飄着一股烤肉的香味。小女孩在房子的牆角坐下來，縮成一團。她抽在一根火柴，在牆上擦燃了。她把小手攏在火焰上，這溫暖又明亮的光芒，讓她覺得自己坐在火爐旁邊。當她剛剛伸出雙腳，想讓腳暖和一下時，火就滅了！手裏只有燒過的火柴梗。\n\n她又擦了一根。這奇異的亮光，使牆變得像薄紗般透亮，她彷彿看到屋裏桌上那隻冒著香氣的烤鵝向她走來。這時火柴又滅了，她面前只有一堵又厚又冷的牆。\n\n她擦着了另一根。這次她坐在聖誕樹下，綠色的樹枝上燃着幾千枝蠟燭，在向她眨眼睛。燭光越升越高，變成了閃爍的星星。有一顆星星落下來了，在天上劃出了一道長長的火絲。\n\n「有一個人死去了。」小女孩想。因為她去世的祖母曾告訴她：天上落下顆星，地上就會有一個靈魂升上去。\n\n她又擦了一根。在光亮中，祖母出現了，她是那麼溫柔，那麼和藹。\n\n「祖母！」小女孩叫起來，「請把我帶走吧！這火柴一滅，您就會不見了！」\n\n她趕緊把剩下的火柴都擦亮了，發出的光芒照得比大白天還要明亮。祖母從沒像現在這樣美麗和高大，她把小女孩抱起來，摟在懷裏。她們在光明和快樂中飛走了，飛到既沒有寒冷，又沒有飢餓，也沒有憂愁的地方去了。\n（改寫自安徒生原作）`,
+                vocab: ["除夕", "攏", "火焰", "火爐", "冒", "堵", "去世", "靈魂", "摟"],
+                useVocab: ["縮", "暖和", "奇異", "仿佛", "閃爍", "和藹", "剩下", "光芒", "飢餓", "憂愁"],
+                properNouns: ["安徒生"]
+            },
+            {
+                id: 10,
+                title: "快樂王子",
+                content: `快樂王子聳立在城市的上空，金燦燦的。他有一對藍寶石做的眼睛，腰間的佩劍上嵌了一顆大紅寶石，燦爛地發着紅光。\n\n某夜，一隻燕子停在王子的腳下，水滴落到燕子身上。他仰起頭，看見王子的眼裏都是淚水，淚珠沿着他的臉頰流下來。\n\n「你是誰？」燕子問。\n「我是快樂王子。」\n「快樂王子，你為甚麼哭呢？」\n\n「皇宮圍了高牆，我活着時看不到外面的世界，所以我很快樂。我死後被放在這裏，看見城裏一切的窮困和醜惡，忍不住哭了。燕子，在那個小房子裏，有一個帶病容的婦人，她的小孩在發熱。請你把我劍柄上的紅寶石取下來給她，我的腳釘牢在像座上，沒法親自送去。」\n\n快樂王子那樣憂愁，叫燕子的心軟了。他於是飛到小房子，把紅寶石放在桌上，又用翅膀煽著小孩的前額。\n\n燕子回到王子那裏，把我做過的事講給王子聽。\n\n王子說：「廣場上站着一個賣火柴的小女孩，她的火柴都丟在溝裏。正哭着的她沒有鞋，沒有襪子，沒有帽子。你把我一隻眼睛也取下來給她吧！」\n\n燕子說：「我不能取下你的眼睛，你會變成瞎子！」\n\n「燕子，燕子……」王子說，「你就照我的話去做吧！」\n\n他取下王子的眼睛，把寶石輕輕放在小女孩的手裏。「多麼可愛的玻璃！」小女孩叫起來，笑着跑回家。\n\n快樂王子瞎了，燕子便告訴他城裏的景象：有錢人在豪宅裏作樂，乞丐坐在門外受凍；橋下躺着摟在一起的小孩，卻被看守人趕走，只好走進雨中。\n\n「我滿身貼著純金，」王子說，「請你把它一片一片地摘掉，送給所有的窮人。」\n\n燕子於是把金啄下來，王子便變得灰暗難看。\n\n城裏的人看到王子不再金碧輝煌，就把他的像放進爐裏，可是怎麼也熔不掉王子的鉛心。\n（改寫自王爾德原作）`,
+                vocab: ["聳立", "佩劍", "嵌", "病容", "溝", "豪宅", "作樂", "啄", "金碧輝煌", "熔"],
+                useVocab: ["燦爛", "仰", "窮困", "醜惡", "煽", "廣場", "瞎子", "景象", "乞丐", "純"],
+                properNouns: ["王爾德"]
+            },
+            {
+                id: 11,
+                title: "海倫·凱勒",
+                content: `海倫·凱勒是美國近代著名的教育家。她掌握了五種文字（英文、法文、德文、拉丁文和希臘文）,但令人不敢相信的是,她在兩歲時失去了視力和聽力,所以她不會說話。\n\n海倫的父母不但不放棄她,反而為她找到了一位家庭教師沙利文。沙利文老師為了讓海倫理解每一個東西有一個「名字」,她拉著海倫的小手,讓海倫把手放在水流中,然後在她另一隻手的手心裏,不斷重複寫著「水」這個字。突然,海倫恍然大悟,終於明白了老師的意思。\n\n從此,海倫進入了文字的世界,她的世界不再是一片黑暗。\n\n到了十歲,海倫除了能用手指寫字的方式和別人「交談」以外,也學會了閱讀點字書,這麼一來,她就可以學習更多的知識了。\n\n這時,沙利文老師要教海倫說話,她帶著海倫求教專家。這個老師要海倫在她說話時,輕輕觸摸著他的嘴唇,體會嘴唇的變化,再模仿老師嘴形的變化來發音。海倫學習說每一個字都要經常嘗試、修正幾十次,甚至幾百次,才能正確地發出音來。\n\n每當海倫感到灰心的時候,沙利文老師就會在她手心慢慢寫著：「如果不想當啞巴,你就得堅持下去！」\n\n在老師的鼓勵下,海倫漸漸學會了說話！\n\n海倫在二十歲那年順利進入了大學,後來以優異的成績畢業。海倫的故事不斷鼓舞著世人,聯合國還曾經發起了「海倫·凱勒」世界運動,激勵大家學習海倫的精神。\n（改寫自管家淇《海倫·凱勒的故事》）`,
+                vocab: ["近代", "理解", "恍然大悟", "體會", "修正", "啞巴", "堅持", "畢業", "鼓舞", "激勵"],
+                useVocab: ["著名", "不斷", "重複", "模仿", "嘗試", "正確", "灰心", "鼓勵", "順利", "優異"],
+                properNouns: ["海倫·凱勒", "海倫", "美國", "沙利文", "英文", "法文", "德文", "拉丁文", "希臘文", "聯合國", "管家淇"]
+            },
+            {
+                id: 12,
+                title: "魯迅",
+                content: `魯迅是中國近代的文學家和思想家,曾經改變過一代的風氣。\n\n魯迅二十四歲那年,到日本學醫,打算學成之後,好好當一名救人的醫生。他在學校上課時,看到一部幻燈片,有個中國人被日軍抓住,就地處死。圍觀的一夥人也是中國人,行刑時,圍觀者全部都無動於衷,面無表情。魯迅心想：「凡是愚弱的國民,不論體格再怎麼強健,最終也只是做了被處死的人,或是看着同胞被處死的觀眾。能救這些人的絕不是高明的醫術！我們更需要醫治的是內在的靈魂！要改變國人的精神,只有文藝運動才辦得到！」\n\n這件事讓魯迅放棄了學醫,開始努力當一個作家,用筆代替手術刀,為中國人「治病」。他一面寫文章,毫不留情地指出時代的弊病；一面翻譯外國作品,用來喚醒尚在睡夢中的國人。\n\n魯迅一生著述豐富,含翻譯,書信等,超過一千萬字。一九三六年,他在上海病逝,享年五十六歲。當時,很多上海市民都前去為魯迅送行,所謂萬人空巷。\n\n如今,研究魯迅的人遍及世界各國,以他著作為題材的文章多得可以堆滿一間大房子。他的聲音不因死去而歇止,仍在歷史中迴盪！\n（改寫自張嘉驊《魯迅——甘心為孩子做牛馬的人》）`,
+                vocab: ["文學家", "思想家", "風氣", "無動於衷", "愚弱", "強健", "靈魂", "手術刀"],
+                useVocab: ["弊病", "喚醒", "著述", "萬人空巷", "題材", "歇止", "迴盪"],
+                properNouns: ["魯迅", "中國", "日本", "日軍", "上海", "張嘉驊"]
+            }
+        ];
+
+        // State Management (Updated cache key to v9 for new dual vocabulary classification)
+        let lessons = JSON.parse(localStorage.getItem('lesson_data_v9')) || defaultLessons;
+        let currentLessonIndex = 0;
+        let currentFontSize = 22;
+        let isPlayingAll = false;
+        let isPaused = false;
+        let isHighlightVocab = true;
+        let selectedVocabWord = null;
+        let currentSentenceIdx = 0;
+        let sentenceElements = [];
+
+        // Web Speech Synthesis Setup
+        const synth = window.speechSynthesis;
+        let selectedVoice = null;
+        let mandarinVoices = [];
+
+        // DOM Element References
+        const lessonListEl = document.getElementById('lessonList');
+        const lessonTitleEl = document.getElementById('lessonTitle');
+        const lessonBadgeEl = document.getElementById('lessonBadge');
+        const articleViewEl = document.getElementById('articleView');
+        const vocabRecognizeListEl = document.getElementById('vocabRecognizeList');
+        const vocabApplyListEl = document.getElementById('vocabApplyList');
+        const recognizeCountBadge = document.getElementById('recognizeCountBadge');
+        const applyCountBadge = document.getElementById('applyCountBadge');
+        
+        const articleEditorEl = document.getElementById('articleEditor');
+        const editTitleInput = document.getElementById('editTitleInput');
+        const editTextarea = document.getElementById('editTextarea');
+        const editVocabInput = document.getElementById('editVocabInput');
+        const editUseVocabInput = document.getElementById('editUseVocabInput');
+        const editProperInput = document.getElementById('editProperInput');
+        
+        const voiceSelectEl = document.getElementById('voiceSelect');
+        const rateSelectEl = document.getElementById('rateSelect');
+        const fontSizeDisplay = document.getElementById('fontSizeDisplay');
+        const pageIndicatorEl = document.getElementById('pageIndicator');
+        const btnToggleHighlightVocab = document.getElementById('btnToggleHighlightVocab');
+        const highlightBtnText = document.getElementById('highlightBtnText');
+        const btnClearVocabSelect = document.getElementById('btnClearVocabSelect');
+
+        const btnPlayAll = document.getElementById('btnPlayAll');
+        const btnStop = document.getElementById('btnStop');
+        const playIcon = document.getElementById('playIcon');
+        const playText = document.getElementById('playText');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnToggleEdit = document.getElementById('btnToggleEdit');
+        const btnSaveEdit = document.getElementById('btnSaveEdit');
+        const btnCancelEdit = document.getElementById('btnCancelEdit');
+
+        const btnToggleFolder = document.getElementById('btnToggleFolder');
+        const folderModal = document.getElementById('folderModal');
+        const btnCloseFolder = document.getElementById('btnCloseFolder');
+        const btnDoneFolder = document.getElementById('btnDoneFolder');
+        const batchFileInput = document.getElementById('batchFileInput');
+        const folderLessonList = document.getElementById('folderLessonList');
+        const btnExportJSON = document.getElementById('btnExportJSON');
+        const btnResetDefault = document.getElementById('btnResetDefault');
+
+        function openFolderModal() {
+            renderFolderLessonList();
+            folderModal.classList.remove('hidden');
+        }
+
+        function closeFolderModal() {
+            folderModal.classList.add('hidden');
+            renderSidebar();
+            renderLessonContent();
+        }
+
+        btnToggleFolder.onclick = openFolderModal;
+        btnCloseFolder.onclick = closeFolderModal;
+        btnDoneFolder.onclick = closeFolderModal;
+
+        function renderFolderLessonList() {
+            folderLessonList.innerHTML = '';
+            lessons.forEach((lesson, index) => {
+                const wordCount = lesson.content.replace(/\s+/g, '').length;
+
+                const row = document.createElement('div');
+                row.className = "bg-white p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm";
+                
+                row.innerHTML = `
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <span class="w-8 h-8 shrink-0 rounded-lg bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs">
+                            ${lesson.id}
+                        </span>
+                        <div class="truncate">
+                            <h5 class="font-bold text-sm text-slate-800 truncate">${lesson.title}</h5>
+                            <span class="text-xs text-emerald-600 font-medium">[已載入 ${wordCount} 字]</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
+                        <label class="cursor-pointer bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center">
+                            <i class="fa-solid fa-file-arrow-up mr-1 text-amber-600"></i> 上傳文字檔
+                            <input type="file" accept=".txt" class="hidden" onchange="uploadSingleLessonText(${index}, this)">
+                        </label>
+                        <button onclick="editLessonFromFolder(${index})" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                            <i class="fa-solid fa-pen mr-1"></i> 編輯
+                        </button>
+                    </div>
+                `;
+                folderLessonList.appendChild(row);
+            });
+        }
+
+        window.uploadSingleLessonText = function(index, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result.trim();
+                lessons[index].title = file.name.replace(/\.[^/.]+$/, "") || `第 ${index + 1} 課`;
+                lessons[index].content = text;
+                saveLessonsToStorage();
+                renderFolderLessonList();
+                showToast(`第 ${index + 1} 課文件上傳成功！`);
+            };
+            reader.readAsText(file, 'UTF-8');
+        };
+
+        window.editLessonFromFolder = function(index) {
+            currentLessonIndex = index;
+            closeFolderModal();
+            openEditor();
+        };
+
+        batchFileInput.addEventListener('change', (e) => {
+            handleBatchFiles(e.target.files);
+        });
+
+        function handleBatchFiles(files) {
+            if (!files || files.length === 0) return;
+
+            Array.from(files).forEach((file) => {
+                if (file.name.endsWith('.json')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const imported = JSON.parse(e.target.result);
+                            if (Array.isArray(imported) && imported.length > 0) {
+                                lessons = imported;
+                                saveLessonsToStorage();
+                                renderFolderLessonList();
+                                showToast("備份資料 (JSON) 成功匯入！");
+                            }
+                        } catch(err) {
+                            showToast("JSON 格式不正確");
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+        }
+
+        function saveLessonsToStorage() {
+            localStorage.setItem('lesson_data_v9', JSON.stringify(lessons));
+        }
+
+        btnExportJSON.onclick = () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lessons, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "小四中文朗讀_四上一二_課本完整內容.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("全套 12 課資料已成功匯出備份！");
+        };
+
+        btnResetDefault.onclick = () => {
+            if (confirm("確定要重置為預設課文與生字嗎？自訂的修改將會被覆蓋。")) {
+                lessons = defaultLessons;
+                saveLessonsToStorage();
+                renderFolderLessonList();
+                showToast("已恢復初始課文與生字");
+            }
+        };
+
+        function populateVoices() {
+            const voices = synth.getVoices();
+            voiceSelectEl.innerHTML = '';
+            mandarinVoices = voices.filter(v => 
+                v.lang.includes('zh') || 
+                v.lang.includes('CN') || 
+                v.lang.includes('TW') || 
+                v.lang.includes('HK') || 
+                v.name.toLowerCase().includes('chinese') ||
+                v.name.toLowerCase().includes('mandarin') ||
+                v.name.toLowerCase().includes('putonghua')
+            );
+            
+            if (mandarinVoices.length === 0) {
+                mandarinVoices = voices;
+            }
+
+            mandarinVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = index;
+                option.className = 'text-slate-800';
+                if (voice.lang === 'zh-CN' || voice.lang === 'zh_CN' || voice.name.includes('Mandarin') || voice.name.includes('Putonghua')) {
+                    option.selected = true;
+                    selectedVoice = voice;
+                }
+                voiceSelectEl.appendChild(option);
+            });
+
+            if (!selectedVoice && mandarinVoices.length > 0) {
+                selectedVoice = mandarinVoices[0];
+            }
+        }
+
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = populateVoices;
+        }
+
+        voiceSelectEl.onchange = () => {
+            if (mandarinVoices[voiceSelectEl.value]) {
+                selectedVoice = mandarinVoices[voiceSelectEl.value];
+            }
+        };
+
+        document.getElementById('btnDecreaseFont').onclick = () => {
+            if (currentFontSize > 16) {
+                currentFontSize -= 2;
+                articleViewEl.style.fontSize = `${currentFontSize}px`;
+                fontSizeDisplay.textContent = `${currentFontSize}px`;
+            }
+        };
+
+        document.getElementById('btnIncreaseFont').onclick = () => {
+            if (currentFontSize < 36) {
+                currentFontSize += 2;
+                articleViewEl.style.fontSize = `${currentFontSize}px`;
+                fontSizeDisplay.textContent = `${currentFontSize}px`;
+            }
+        };
+
+        function renderSidebar() {
+            lessonListEl.innerHTML = '';
+            const countLabel = document.getElementById('lessonCountLabel');
+            if (countLabel) countLabel.textContent = `課文目錄 (共${lessons.length}課)`;
+            
+            lessons.forEach((lesson, index) => {
+                const btn = document.createElement('button');
+                const isActive = index === currentLessonIndex;
+                btn.className = `w-full text-left px-3.5 py-3 rounded-xl font-medium text-base transition flex items-center justify-between ${
+                    isActive 
+                        ? 'bg-amber-600 text-white shadow-sm' 
+                        : 'text-slate-700 hover:bg-amber-50'
+                }`;
+                
+                const numberColorClass = isActive ? 'text-amber-200' : 'text-amber-700';
+                const nameColorClass = isActive ? 'text-white' : 'text-slate-900';
+
+                btn.innerHTML = `
+                    <span class="truncate flex items-center space-x-2">
+                        <span class="${numberColorClass} font-semibold text-sm shrink-0">第${index + 1}課</span>
+                        <span class="${nameColorClass} font-bold truncate">${lesson.title}</span>
+                    </span>
+                    ${isActive ? '<i class="fa-solid fa-chevron-right text-xs shrink-0 ml-2"></i>' : ''}
+                `;
+                btn.onclick = () => switchLesson(index);
+                lessonListEl.appendChild(btn);
+            });
+        }
+
+        function formatSentenceHtml(text, vocabList, useVocabList, properList) {
+            const chars = Array.from(text);
+            const meta = chars.map(ch => ({
+                char: ch,
+                isProper: false,
+                properStart: false,
+                properEnd: false,
+                vocabWord: null,
+                vocabType: null,
+                vocabStart: false,
+                vocabEnd: false
+            }));
+
+            const sortedProper = [...(properList || [])].filter(Boolean).sort((a, b) => b.length - a.length);
+            const sortedRecognize = [...(vocabList || [])].filter(Boolean).sort((a, b) => b.length - a.length);
+            const sortedApply = [...(useVocabList || [])].filter(Boolean).sort((a, b) => b.length - a.length);
+
+            sortedProper.forEach(pn => {
+                let pos = 0;
+                while ((pos = text.indexOf(pn, pos)) !== -1) {
+                    let overlap = false;
+                    for (let i = pos; i < pos + pn.length; i++) {
+                        if (meta[i].isProper) { overlap = true; break; }
+                    }
+                    if (!overlap) {
+                        for (let i = pos; i < pos + pn.length; i++) {
+                            meta[i].isProper = true;
+                            if (i === pos) meta[i].properStart = true;
+                            if (i === pos + pn.length - 1) meta[i].properEnd = true;
+                        }
+                    }
+                    pos += pn.length;
+                }
+            });
+
+            sortedRecognize.forEach(vw => {
+                let pos = 0;
+                while ((pos = text.indexOf(vw, pos)) !== -1) {
+                    let overlap = false;
+                    for (let i = pos; i < pos + vw.length; i++) {
+                        if (meta[i].vocabWord) { overlap = true; break; }
+                    }
+                    if (!overlap) {
+                        for (let i = pos; i < pos + vw.length; i++) {
+                            meta[i].vocabWord = vw;
+                            meta[i].vocabType = 'recognize';
+                            if (i === pos) meta[i].vocabStart = true;
+                            if (i === pos + vw.length - 1) meta[i].vocabEnd = true;
+                        }
+                    }
+                    pos += vw.length;
+                }
+            });
+
+            sortedApply.forEach(vw => {
+                let pos = 0;
+                while ((pos = text.indexOf(vw, pos)) !== -1) {
+                    let overlap = false;
+                    for (let i = pos; i < pos + vw.length; i++) {
+                        if (meta[i].vocabWord) { overlap = true; break; }
+                    }
+                    if (!overlap) {
+                        for (let i = pos; i < pos + vw.length; i++) {
+                            meta[i].vocabWord = vw;
+                            meta[i].vocabType = 'apply';
+                            if (i === pos) meta[i].vocabStart = true;
+                            if (i === pos + vw.length - 1) meta[i].vocabEnd = true;
+                        }
+                    }
+                    pos += vw.length;
+                }
+            });
+
+            let html = '';
+            for (let i = 0; i < meta.length; i++) {
+                const item = meta[i];
+                
+                if (item.vocabStart) {
+                    const vocabClass = item.vocabType === 'apply' ? 'vocab-apply' : 'vocab-recognize';
+                    html += `<span class="vocab-mark ${vocabClass}" data-vocab="${item.vocabWord}">`;
+                }
+                if (item.properStart) {
+                    html += `<span class="proper-name">`;
+                }
+
+                const safeChar = item.char === '&' ? '&amp;' : (item.char === '<' ? '&lt;' : (item.char === '>' ? '&gt;' : item.char));
+                html += safeChar;
+
+                if (item.properEnd) {
+                    html += `</span>`;
+                }
+                if (item.vocabEnd) {
+                    html += `</span>`;
+                }
+            }
+
+            return html;
+        }
+
+        function renderLessonContent() {
+            stopSpeech();
+            selectedVocabWord = null;
+            updateClearVocabBtnState();
+
+            const lesson = lessons[currentLessonIndex];
+            lessonTitleEl.textContent = lesson.title;
+            lessonBadgeEl.textContent = `第 ${currentLessonIndex + 1} 課`;
+            pageIndicatorEl.textContent = `第 ${currentLessonIndex + 1} / ${lessons.length} 課`;
+
+            btnPrev.disabled = currentLessonIndex === 0;
+            btnNext.disabled = currentLessonIndex === lessons.length - 1;
+
+            articleViewEl.innerHTML = '';
+            
+            if (isHighlightVocab) {
+                articleViewEl.classList.add('highlight-mode');
+            } else {
+                articleViewEl.classList.remove('highlight-mode');
+            }
+
+            const paragraphs = lesson.content.split(/\n+/);
+            
+            paragraphs.forEach(pText => {
+                if (!pText.trim()) return;
+                const pEl = document.createElement('p');
+                pEl.className = "mb-4 text-justify tracking-wide leading-relaxed";
+
+                const sentenceRegex = /[^。！？；!?;\n]+[。！？；!?;]?/g;
+                const matches = pText.match(sentenceRegex) || [pText];
+
+                matches.forEach(sText => {
+                    if (!sText.trim()) return;
+                    const span = document.createElement('span');
+                    span.className = 'sentence';
+                    
+                    span.innerHTML = formatSentenceHtml(sText, lesson.vocab || [], lesson.useVocab || [], lesson.properNouns || []);
+
+                    span.onclick = (e) => {
+                        if (e.target && e.target.classList.contains('vocab-mark')) {
+                            return;
+                        }
+                        speakSingleSentence(sText, span);
+                    };
+
+                    pEl.appendChild(span);
+                });
+
+                articleViewEl.appendChild(pEl);
+            });
+
+            articleViewEl.querySelectorAll('.vocab-mark').forEach(vEl => {
+                vEl.onclick = (e) => {
+                    e.stopPropagation();
+                    const word = vEl.getAttribute('data-vocab');
+                    selectAndHighlightVocab(word, true);
+                };
+            });
+
+            renderVocabBadges(lesson.vocab || [], lesson.useVocab || []);
+            renderSidebar();
+        }
+
+        function renderVocabBadges(recognizeArr, applyArr) {
+            vocabRecognizeListEl.innerHTML = '';
+            vocabApplyListEl.innerHTML = '';
+
+            recognizeCountBadge.textContent = `${recognizeArr.length} 字`;
+            applyCountBadge.textContent = `${applyArr.length} 字`;
+
+            if (recognizeArr.length === 0) {
+                vocabRecognizeListEl.innerHTML = '<span class="text-xs text-slate-400">尚無認讀字詞</span>';
+            } else {
+                recognizeArr.forEach((word, index) => {
+                    const isSelected = selectedVocabWord === word;
+                    const btn = document.createElement('button');
+                    btn.className = `vocab-badge-btn group border font-bold px-3 py-1 rounded-lg shadow-sm hover:shadow active:scale-95 transition-all duration-150 flex items-center space-x-1.5 text-sm cursor-pointer ${
+                        isSelected 
+                            ? 'bg-amber-600 border-amber-700 text-white ring-2 ring-amber-400/50 scale-105 shadow-md' 
+                            : 'bg-white hover:bg-amber-100 border-amber-300 text-amber-900'
+                    }`;
+                    btn.setAttribute('data-word', word);
+                    btn.innerHTML = `
+                        <span class="text-xs ${isSelected ? 'text-amber-100' : 'text-amber-600'}">${index + 1}.</span>
+                        <span>${word}</span>
+                        <i class="fa-solid fa-volume-high text-xs ${isSelected ? 'text-amber-200' : 'text-amber-500'}"></i>
+                    `;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        selectAndHighlightVocab(word, true);
+                    };
+                    vocabRecognizeListEl.appendChild(btn);
+                });
+            }
+
+            if (applyArr.length === 0) {
+                vocabApplyListEl.innerHTML = '<span class="text-xs text-slate-400">尚無運用字詞</span>';
+            } else {
+                applyArr.forEach((word, index) => {
+                    const isSelected = selectedVocabWord === word;
+                    const btn = document.createElement('button');
+                    btn.className = `vocab-badge-btn group border font-bold px-3 py-1 rounded-lg shadow-sm hover:shadow active:scale-95 transition-all duration-150 flex items-center space-x-1.5 text-sm cursor-pointer ${
+                        isSelected 
+                            ? 'bg-emerald-600 border-emerald-700 text-white ring-2 ring-emerald-400/50 scale-105 shadow-md' 
+                            : 'bg-white hover:bg-emerald-100 border-emerald-300 text-emerald-900'
+                    }`;
+                    btn.setAttribute('data-word', word);
+                    btn.innerHTML = `
+                        <span class="text-xs ${isSelected ? 'text-emerald-100' : 'text-emerald-600'}">${index + 1}.</span>
+                        <span>${word}</span>
+                        <i class="fa-solid fa-volume-high text-xs ${isSelected ? 'text-emerald-200' : 'text-emerald-500'}"></i>
+                    `;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        selectAndHighlightVocab(word, true);
+                    };
+                    vocabApplyListEl.appendChild(btn);
+                });
+            }
+        }
+
+        function selectAndHighlightVocab(word, speak = true) {
+            selectedVocabWord = word;
+            updateClearVocabBtnState();
+
+            if (!isHighlightVocab) {
+                isHighlightVocab = true;
+                articleViewEl.classList.add('highlight-mode');
+                updateHighlightBtnUI();
+            }
+
+            if (speak) {
+                speakVocabWord(word);
+            }
+
+            renderVocabBadges(lessons[currentLessonIndex].vocab || [], lessons[currentLessonIndex].useVocab || []);
+
+            const allVocabMarks = articleViewEl.querySelectorAll('.vocab-mark');
+            let firstMatch = null;
+
+            allVocabMarks.forEach(mark => {
+                const vocabAttr = mark.getAttribute('data-vocab');
+                if (vocabAttr === word) {
+                    mark.classList.add('active-vocab-target');
+                    if (!firstMatch) firstMatch = mark;
+                } else {
+                    mark.classList.remove('active-vocab-target');
+                }
+            });
+
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function clearVocabSelection() {
+            selectedVocabWord = null;
+            updateClearVocabBtnState();
+            renderVocabBadges(lessons[currentLessonIndex].vocab || [], lessons[currentLessonIndex].useVocab || []);
+            articleViewEl.querySelectorAll('.vocab-mark').forEach(mark => {
+                mark.classList.remove('active-vocab-target');
+            });
+        }
+
+        function updateClearVocabBtnState() {
+            if (selectedVocabWord) {
+                btnClearVocabSelect.classList.remove('hidden');
+            } else {
+                btnClearVocabSelect.classList.add('hidden');
+            }
+        }
+
+        btnClearVocabSelect.onclick = clearVocabSelection;
+
+        btnToggleHighlightVocab.onclick = () => {
+            isHighlightVocab = !isHighlightVocab;
+            if (isHighlightVocab) {
+                articleViewEl.classList.add('highlight-mode');
+                showToast("已開啟文章生字高亮");
+            } else {
+                articleViewEl.classList.remove('highlight-mode');
+                clearVocabSelection();
+                showToast("已關閉文章生字高亮");
+            }
+            updateHighlightBtnUI();
+        };
+
+        function updateHighlightBtnUI() {
+            if (isHighlightVocab) {
+                btnToggleHighlightVocab.className = "bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center shadow-sm";
+                highlightBtnText.textContent = "生字高亮中";
+            } else {
+                btnToggleHighlightVocab.className = "bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center";
+                highlightBtnText.textContent = "生字高亮";
+            }
+        }
+
+        function speakVocabWord(word) {
+            stopSpeech();
+
+            const utterance = new SpeechSynthesisUtterance(word);
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.rate = parseFloat(rateSelectEl.value) || 0.9;
+            utterance.lang = 'zh-CN';
+
+            synth.speak(utterance);
+        }
+
+        function clearSentenceHighlights() {
+            document.querySelectorAll('.sentence.active').forEach(el => el.classList.remove('active'));
+        }
+
+        function speakSingleSentence(text, spanElement) {
+            stopSpeech();
+            clearSentenceHighlights();
+            
+            if (spanElement) {
+                spanElement.classList.add('active');
+                sentenceElements = Array.from(articleViewEl.querySelectorAll('.sentence'));
+                const idx = sentenceElements.indexOf(spanElement);
+                if (idx !== -1) {
+                    currentSentenceIdx = idx;
+                }
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.rate = parseFloat(rateSelectEl.value) || 1.0;
+            utterance.lang = 'zh-CN';
+
+            utterance.onend = () => {
+                if (spanElement) spanElement.classList.remove('active');
+            };
+            utterance.onerror = () => {
+                if (spanElement) spanElement.classList.remove('active');
+            };
+
+            synth.speak(utterance);
+        }
+
+        function playFullArticle() {
+            sentenceElements = Array.from(articleViewEl.querySelectorAll('.sentence'));
+            if (sentenceElements.length === 0) return;
+
+            if (isPlayingAll) {
+                pauseSpeech();
+                return;
+            }
+
+            if (currentSentenceIdx >= sentenceElements.length) {
+                currentSentenceIdx = 0;
+            }
+
+            isPlayingAll = true;
+            isPaused = false;
+            
+            playIcon.className = 'fa-solid fa-pause mr-2';
+            playText.textContent = '暫停朗讀';
+            btnPlayAll.classList.replace('bg-amber-600', 'bg-amber-800');
+
+            speakNextInQueue();
+        }
+
+        function speakNextInQueue() {
+            if (!isPlayingAll || currentSentenceIdx >= sentenceElements.length) {
+                if (currentSentenceIdx >= sentenceElements.length) {
+                    stopSpeech();
+                }
+                return;
+            }
+
+            clearSentenceHighlights();
+            const currentSpan = sentenceElements[currentSentenceIdx];
+            if (!currentSpan) {
+                stopSpeech();
+                return;
+            }
+
+            currentSpan.classList.add('active');
+            currentSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const text = currentSpan.textContent;
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.rate = parseFloat(rateSelectEl.value) || 1.0;
+            utterance.lang = 'zh-CN';
+
+            utterance.onend = () => {
+                if (isPlayingAll) {
+                    currentSentenceIdx++;
+                    speakNextInQueue();
+                }
+            };
+
+            utterance.onerror = () => {
+                if (isPlayingAll) {
+                    currentSentenceIdx++;
+                    speakNextInQueue();
+                }
+            };
+
+            synth.speak(utterance);
+        }
+
+        function pauseSpeech() {
+            synth.cancel();
+            isPlayingAll = false;
+            isPaused = true;
+            playIcon.className = 'fa-solid fa-play mr-2';
+            playText.textContent = currentSentenceIdx > 0 ? '繼續朗讀' : '朗讀全文';
+            btnPlayAll.classList.replace('bg-amber-800', 'bg-amber-600');
+        }
+
+        function stopSpeech() {
+            synth.cancel();
+            isPlayingAll = false;
+            isPaused = false;
+            currentSentenceIdx = 0;
+            clearSentenceHighlights();
+            playIcon.className = 'fa-solid fa-play mr-2';
+            playText.textContent = '朗讀全文';
+            btnPlayAll.classList.replace('bg-amber-800', 'bg-amber-600');
+        }
+
+        function switchLesson(newIndex) {
+            if (newIndex < 0 || newIndex >= lessons.length) return;
+            currentLessonIndex = newIndex;
+            if (!articleEditorEl.classList.contains('hidden')) {
+                closeEditor();
+            }
+            renderLessonContent();
+        }
+
+        btnPrev.onclick = () => switchLesson(currentLessonIndex - 1);
+        btnNext.onclick = () => switchLesson(currentLessonIndex + 1);
+
+        btnPlayAll.onclick = playFullArticle;
+        btnStop.onclick = stopSpeech;
+
+        btnToggleEdit.onclick = () => {
+            stopSpeech();
+            const isEditing = !articleEditorEl.classList.contains('hidden');
+            if (isEditing) {
+                closeEditor();
+            } else {
+                openEditor();
+            }
+        };
+
+        function openEditor() {
+            const lesson = lessons[currentLessonIndex];
+            editTitleInput.value = lesson.title;
+            editTextarea.value = lesson.content;
+            editVocabInput.value = (lesson.vocab || []).join(', ');
+            editUseVocabInput.value = (lesson.useVocab || []).join(', ');
+            editProperInput.value = (lesson.properNouns || []).join(', ');
+            
+            articleViewEl.classList.add('hidden');
+            document.getElementById('vocabSection').classList.add('hidden');
+            articleEditorEl.classList.remove('hidden');
+            btnToggleEdit.classList.add('bg-amber-800');
+        }
+
+        function closeEditor() {
+            articleViewEl.classList.remove('hidden');
+            document.getElementById('vocabSection').classList.remove('hidden');
+            articleEditorEl.classList.add('hidden');
+            btnToggleEdit.classList.remove('bg-amber-800');
+        }
+
+        btnCancelEdit.onclick = closeEditor;
+
+        btnSaveEdit.onclick = () => {
+            const newTitle = editTitleInput.value.trim();
+            const newContent = editTextarea.value.trim();
+            const rawVocab = editVocabInput.value.trim();
+            const rawUseVocab = editUseVocabInput.value.trim();
+            const rawProper = editProperInput.value.trim();
+
+            if (!newTitle || !newContent) {
+                showToast("標題與內容不能為空");
+                return;
+            }
+
+            const parsedVocab = rawVocab 
+                ? rawVocab.split(/[,，、\s]+/).filter(w => w.trim().length > 0)
+                : [];
+
+            const parsedUseVocab = rawUseVocab 
+                ? rawUseVocab.split(/[,，、\s]+/).filter(w => w.trim().length > 0)
+                : [];
+
+            const parsedProper = rawProper
+                ? rawProper.split(/[,，、\s]+/).filter(w => w.trim().length > 0)
+                : [];
+
+            lessons[currentLessonIndex].title = newTitle;
+            lessons[currentLessonIndex].content = newContent;
+            lessons[currentLessonIndex].vocab = parsedVocab;
+            lessons[currentLessonIndex].useVocab = parsedUseVocab;
+            lessons[currentLessonIndex].properNouns = parsedProper;
+
+            saveLessonsToStorage();
+
+            closeEditor();
+            renderLessonContent();
+            showToast("課文與生字詞語已順利儲存！");
+        };
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        window.onload = () => {
+            articleViewEl.style.fontSize = `${currentFontSize}px`;
+            populateVoices();
+            updateHighlightBtnUI();
+            renderLessonContent();
+        };
+    </script>
+</body>
+</html>
